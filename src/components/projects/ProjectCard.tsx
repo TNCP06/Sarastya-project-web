@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ProjectListItem } from "@/types/api";
 import { formatDate } from "@/lib/format";
+import { encodeId } from "@/lib/idcodec";
 import { Button } from "@/components/ui/Button";
 
 interface Props {
@@ -16,7 +17,7 @@ export function ProjectCard({ project, onEdit, onDelete }: Props) {
   return (
     <div className="flex flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md">
       <div className="flex items-start justify-between gap-2">
-        <Link href={`/projects/${project.id}`} className="min-w-0 flex-1">
+        <Link href={`/projects/${encodeId(project.id)}`} className="min-w-0 flex-1">
           <h3 className="truncate font-semibold text-slate-900 hover:underline">
             {project.name}
           </h3>

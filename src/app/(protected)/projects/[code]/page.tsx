@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { getProject, deleteProject } from "@/lib/projects";
 import { updateTask, deleteTask } from "@/lib/tasks";
+import { decodeId } from "@/lib/idcodec";
 import { ApiError } from "@/lib/api";
 import type { ProjectDetail, Task, TaskStatus } from "@/types/api";
 import { Button } from "@/components/ui/Button";
@@ -16,8 +17,9 @@ import { TaskItem } from "@/components/tasks/TaskItem";
 import { TaskFormModal } from "@/components/tasks/TaskFormModal";
 
 export default function ProjectDetailPage() {
-  const params = useParams<{ id: string }>();
-  const projectId = Number(params.id);
+  const params = useParams<{ code: string }>();
+  const decoded = decodeId(params.code); // null = kode tidak valid
+  const projectId = decoded ?? 0;
   const router = useRouter();
 
   const [project, setProject] = useState<ProjectDetail | null>(null);
@@ -58,13 +60,13 @@ export default function ProjectDetailPage() {
   }, [projectId]);
 
   useEffect(() => {
-    if (Number.isNaN(projectId)) {
+    if (decoded === null) {
       setError("Project tidak ditemukan.");
       setLoading(false);
       return;
     }
     load();
-  }, [projectId, load]);
+  }, [decoded, load]);
 
   async function changeStatus(task: Task, status: TaskStatus) {
     if (status === task.status) return;
@@ -153,7 +155,7 @@ export default function ProjectDetailPage() {
           <ErrorState
             message={error ?? "Project tidak ditemukan."}
             onRetry={
-              Number.isNaN(projectId)
+              decoded === null
                 ? undefined
                 : () => {
                     setLoading(true);
