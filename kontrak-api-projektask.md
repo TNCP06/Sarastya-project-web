@@ -156,16 +156,21 @@ Response `204 No Content`. Error: `404`.
 
 Dihasilkan oleh **global exception handler** + validasi. Tidak pernah membocorkan stack trace atau detail internal.
 
-Validasi gagal — `400`:
+Validasi gagal — `400` (format **ProblemDetails** bawaan ASP.NET Core — perhatikan key field **PascalCase** dan judul ada di `title`, bukan `message`):
 ```json
 {
-  "message": "Validasi gagal",
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "One or more validation errors occurred.",
+  "status": 400,
   "errors": {
-    "name": ["Nama wajib diisi"],
-    "email": ["Format email tidak valid"]
-  }
+    "Name": ["Nama wajib diisi", "Nama harus antara 2–100 karakter"],
+    "Email": ["Format email tidak valid"],
+    "Password": ["Password minimal 8 karakter"]
+  },
+  "traceId": "00-..."
 }
 ```
+> Catatan: error `401`/`404`/`409`/`500` memakai format `{ "message": ... }` dari global exception handler, sedangkan **validasi `400` memakai ValidationProblemDetails bawaan framework** (key PascalCase, judul di `title`, tanpa `message`). Klien WAJIB menangani kedua bentuk. *(Dikoreksi agar sesuai backend live — sebelumnya dokumen menulis `{ "message": "Validasi gagal", "errors": { lowercase } }` yang ternyata tidak diimplementasikan backend.)*
 
 Tidak terautentikasi — `401`:
 ```json
