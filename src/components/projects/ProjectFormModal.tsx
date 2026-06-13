@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { createProject, updateProject } from "@/lib/projects";
 import { ApiError } from "@/lib/api";
-import type { ProjectListItem } from "@/types/api";
 import { Modal } from "@/components/ui/Modal";
 import { TextField } from "@/components/ui/TextField";
 import { Textarea } from "@/components/ui/Textarea";
@@ -12,8 +11,8 @@ import { Alert } from "@/components/ui/Alert";
 
 interface Props {
   open: boolean;
-  /** null = mode tambah, selain itu = mode edit. */
-  initial: ProjectListItem | null;
+  /** null = mode tambah, selain itu = mode edit. Menerima project apa pun yang punya id/name/description. */
+  initial: { id: number; name: string; description: string | null } | null;
   onClose: () => void;
   onSaved: () => void;
 }
