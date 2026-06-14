@@ -10,9 +10,11 @@ import { AuthCard } from "@/components/AuthCard";
 import { TextField } from "@/components/ui/TextField";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
+import { useToast } from "@/components/ui/Toast";
 
 export default function LoginPage() {
   const router = useRouter();
+  const toast = useToast();
   const setAuth = useAuthStore((s) => s.setAuth);
   const hasHydrated = useAuthStore((s) => s.hasHydrated);
   const token = useAuthStore((s) => s.token);
@@ -36,6 +38,7 @@ export default function LoginPage() {
     try {
       const res = await login({ email, password });
       setAuth(res.token, res.user);
+      toast.success(`Selamat datang kembali, ${res.user.name}!`);
       router.replace("/projects");
     } catch (err) {
       if (err instanceof ApiError) {

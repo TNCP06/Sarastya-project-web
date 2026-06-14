@@ -10,9 +10,11 @@ import { AuthCard } from "@/components/AuthCard";
 import { TextField } from "@/components/ui/TextField";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
+import { useToast } from "@/components/ui/Toast";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const toast = useToast();
   const setAuth = useAuthStore((s) => s.setAuth);
   const hasHydrated = useAuthStore((s) => s.hasHydrated);
   const token = useAuthStore((s) => s.token);
@@ -36,6 +38,7 @@ export default function RegisterPage() {
     try {
       const res = await register({ name, email, password });
       setAuth(res.token, res.user); // register -> otomatis login
+      toast.success(`Akun dibuat. Selamat datang, ${res.user.name}!`);
       router.replace("/projects");
     } catch (err) {
       if (err instanceof ApiError) {

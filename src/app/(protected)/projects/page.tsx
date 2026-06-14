@@ -9,8 +9,10 @@ import { LoadingState, ErrorState, EmptyState } from "@/components/ui/States";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { ProjectCard } from "@/components/projects/ProjectCard";
 import { ProjectFormModal } from "@/components/projects/ProjectFormModal";
+import { useToast } from "@/components/ui/Toast";
 
 export default function ProjectsPage() {
+  const toast = useToast();
   const [data, setData] = useState<ProjectListItem[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,6 +51,7 @@ export default function ProjectsPage() {
   }
 
   function handleSaved() {
+    toast.success(editing ? "Project diperbarui." : "Project dibuat.");
     setFormOpen(false);
     setEditing(null);
     load();
@@ -60,6 +63,7 @@ export default function ProjectsPage() {
     setDeleteError(null);
     try {
       await deleteProject(deleting.id);
+      toast.success("Project dihapus.");
       setDeleting(null);
       load();
     } catch (err) {

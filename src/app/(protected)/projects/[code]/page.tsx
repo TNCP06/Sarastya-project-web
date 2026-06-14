@@ -9,14 +9,15 @@ import { decodeId } from "@/lib/idcodec";
 import { ApiError } from "@/lib/api";
 import type { ProjectDetail, Task, TaskStatus } from "@/types/api";
 import { Button } from "@/components/ui/Button";
-import { Alert } from "@/components/ui/Alert";
 import { LoadingState, ErrorState, EmptyState } from "@/components/ui/States";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { ProjectFormModal } from "@/components/projects/ProjectFormModal";
 import { TaskItem } from "@/components/tasks/TaskItem";
 import { TaskFormModal } from "@/components/tasks/TaskFormModal";
+import { useToast } from "@/components/ui/Toast";
 
 export default function ProjectDetailPage() {
+  const toast = useToast();
   const params = useParams<{ code: string }>();
   const decoded = decodeId(params.code); // null = kode tidak valid
   const projectId = decoded ?? 0;
@@ -37,7 +38,6 @@ export default function ProjectDetailPage() {
 
   // Ganti status (per task)
   const [statusMutatingId, setStatusMutatingId] = useState<number | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
 
   // Edit / hapus project
   const [projectFormOpen, setProjectFormOpen] = useState(false);
@@ -71,7 +71,6 @@ export default function ProjectDetailPage() {
   async function changeStatus(task: Task, status: TaskStatus) {
     if (status === task.status) return;
     setStatusMutatingId(task.id);
-    setActionError(null);
     try {
       // PUT full body (kontrak): kirim field lengkap + status baru.
       await updateTask(task.id, {
@@ -81,8 +80,9 @@ export default function ProjectDetailPage() {
         dueDate: task.dueDate,
       });
       await load();
+      toast.success("Status task diperbarui.");
     } catch (err) {
-      setActionError(
+      toast.error(
         err instanceof ApiError ? err.message : "Gagal mengubah status task.",
       );
     } finally {
@@ -101,6 +101,7 @@ export default function ProjectDetailPage() {
   }
 
   function handleTaskSaved() {
+    toast.success(editingTask ? "Task diperbarui." : "Task ditambahkan.");
     setTaskFormOpen(false);
     setEditingTask(null);
     load();
@@ -112,6 +113,7 @@ export default function ProjectDetailPage() {
     setTaskDeleteError(null);
     try {
       await deleteTask(deletingTask.id);
+      toast.success("Task dihapus.");
       setDeletingTask(null);
       load();
     } catch (err) {
@@ -128,6 +130,7 @@ export default function ProjectDetailPage() {
     setProjectDeleteError(null);
     try {
       await deleteProject(projectId);
+      toast.success("Project dihapus.");
       router.push("/projects");
     } catch (err) {
       setProjectDeleteError(
@@ -210,12 +213,6 @@ export default function ProjectDetailPage() {
               <Button onClick={openCreateTask}>+ Tambah Task</Button>
             </div>
 
-            {actionError && (
-              <div className="mt-3">
-                <Alert variant="error">{actionError}</Alert>
-              </div>
-            )}
-
             <div className="mt-4">
               {tasks.length === 0 ? (
                 <EmptyState
@@ -263,6 +260,7 @@ export default function ProjectDetailPage() {
         initial={project}
         onClose={() => setProjectFormOpen(false)}
         onSaved={() => {
+          toast.success("Project diperbarui.");
           setProjectFormOpen(false);
           load();
         }}
