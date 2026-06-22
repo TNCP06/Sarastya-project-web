@@ -8,8 +8,9 @@
 
 ## Strategy: ADAPT the rich dashboard (not a rebuild)
 
-Replace the ProjekTask scaffold here with the source project's **full-featured Next.js 15 drive
-dashboard** (grid/browse/search/edit/trash/private space, video streaming with Service-Worker +
+> **Branch is a clean slate** (ProjekTask removed). Copy the source `web/` in fresh.
+
+Bring in the source project's **full-featured Next.js 15 drive dashboard** (grid/browse/search/edit/trash/private space, video streaming with Service-Worker +
 IndexedDB cache, dialogs). Then **swap its data layer**: today it uses server actions hitting
 Postgres directly; change those to **Fetch + JWT against the .NET API** (`Sarastya-project-api`).
 
