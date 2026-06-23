@@ -1,7 +1,7 @@
 import "server-only";
 
 import { unstable_cache } from "next/cache";
-import { apiFetch } from "./apiClient";
+import { apiFetchPublic, getAuthToken } from "./apiClient";
 import { sqliteToMs } from "./format";
 import { tagColorKey } from "./kinds";
 import { parseTitle } from "./version";
@@ -48,19 +48,22 @@ interface ApiDrive {
 
 // Fetch and shape all drive data from the .NET API (Dapper-backed).
 // The shaped result keeps the old UI model intact while moving metadata reads behind JWT REST.
-export function getDriveData(
+export async function getDriveData(
   space: "main" | "private" = "main",
 ): Promise<{ files: DriveFile[]; tags: Tag[]; folders: Folder[] }> {
-  return unstable_cache(() => fetchDriveData(space), ["drive-data", space], {
-    revalidate: 15,
-    tags: [`drive-${space}`],
-  })();
+  const token = await getAuthToken();
+  return unstable_cache(
+    (tok: string) => fetchDriveData(space, tok),
+    ["drive-data", space],
+    { revalidate: 15, tags: [`drive-${space}`] },
+  )(token ?? "");
 }
 
 async function fetchDriveData(
   space: "main" | "private",
+  token: string,
 ): Promise<{ files: DriveFile[]; tags: Tag[]; folders: Folder[] }> {
-  const data = await apiFetch<ApiDrive>(`/drive?space=${space}`);
+  const data = await apiFetchPublic<ApiDrive>(`/drive?space=${space}`, {}, token);
 
   const tags: Tag[] = data.tags.map((t) => {
     const stored = String(t.color ?? "").trim();
