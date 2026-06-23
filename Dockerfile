@@ -1,0 +1,34 @@
+# Web (Next.js 15) — multi-stage build, standalone runtime.
+FROM node:20-slim AS deps
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+
+FROM node:20-slim AS build
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . ./
+# NEXT_PUBLIC_* are inlined at build time → must be present when building. Pages are
+# force-dynamic so metadata is fetched only at request time.
+ARG NEXT_PUBLIC_BOT_USERNAME
+ARG DATABASE_URL
+ARG API_BASE_URL
+ENV NEXT_PUBLIC_BOT_USERNAME=$NEXT_PUBLIC_BOT_USERNAME \
+    DATABASE_URL=$DATABASE_URL \
+    API_BASE_URL=${API_BASE_URL:-http://scd-api:8080} \
+    NEXT_TELEMETRY_DISABLED=1
+RUN npm run build
+
+FROM node:20-slim AS run
+WORKDIR /app
+ENV NODE_ENV=production \
+    NEXT_TELEMETRY_DISABLED=1 \
+    PORT=3000 \
+    HOSTNAME=0.0.0.0
+COPY --from=build /app/.next/standalone ./
+COPY --from=build /app/.next/static ./.next/static
+# `output: standalone` does NOT bundle public/ — copy it so /logo.png, /sw.js,
+# and other static assets are served (otherwise they 404 in production).
+COPY --from=build /app/public ./public
+EXPOSE 3000
+CMD ["node", "server.js"]

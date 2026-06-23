@@ -1,0 +1,34 @@
+"use client";
+
+import { useEffect } from "react";
+import { Icon } from "@/lib/icons";
+
+// Error boundary per-segment: muncul saat server component gagal (mis. koneksi
+// database putus) — menggantikan crash dengan UI yang bisa "Coba lagi" tanpa reload penuh.
+export default function Error({
+  error,
+}: {
+  error: Error & { digest?: string };
+}) {
+  useEffect(() => {
+    console.error(error);
+  }, [error]);
+
+  return (
+    <div className="err-wrap">
+      <div className="err-card">
+        <Icon name="warn" size={40} />
+        <h1>Tidak bisa memuat data</h1>
+        <p>
+          Koneksi ke server (database) sepertinya terputus. Periksa internet lalu coba lagi —
+          proses upload di laptop <b>tidak terpengaruh</b> dan tetap berjalan.
+        </p>
+        <div className="err-actions">
+          <button className="btn primary" onClick={() => location.reload()}>
+            <Icon name="restore" size={16} /> Muat ulang halaman
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
