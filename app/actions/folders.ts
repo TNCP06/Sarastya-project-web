@@ -57,3 +57,10 @@ export async function moveFolderToFolder(
   });
   refresh();
 }
+
+export async function bulkPurgeFolders(folderIds: number[]) {
+  for (const id of folderIds) {
+    await apiFetch<void>(`/folders/${id}/purge`, { method: "POST" });
+  }
+  refresh();
+}

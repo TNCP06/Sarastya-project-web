@@ -93,6 +93,8 @@ interface ItemProps {
   showExtensions?: boolean;
   /** Show per-card detail items (size/date/tags). Off = name only. */
   showDetails?: boolean;
+  /** Folder path breadcrumb for trash view. */
+  parentPath?: string;
 }
 
 /* ---- Selection-on-click / activation-on-double-click wiring ----
@@ -180,6 +182,8 @@ interface FolderProps {
   itemCount?: number;
   /** Total sub-folders inside (recursive). */
   subfolderCount?: number;
+  /** Folder path breadcrumb for trash view. */
+  parentPath?: string;
 }
 
 /** Compact "3 folders · 12 items" summary line for a folder (or "Empty folder"). */
@@ -230,6 +234,7 @@ export function FolderCard({
   selected = false,
   itemCount,
   subfolderCount,
+  parentPath,
 }: FolderProps) {
   return (
     <div className={`card folder ${selected ? "sel" : ""}`} {...folderActivation(folder, onSelect, onOpen, onDetail)}>
@@ -240,7 +245,10 @@ export function FolderCard({
         <div className="fname" title={folder.name}>
           {folder.name}
         </div>
-        <div className="meta">{folderMeta(itemCount, subfolderCount)}</div>
+        <div className="meta">
+          {parentPath && <div style={{ color: "var(--accent-text)", opacity: 0.8, fontSize: "0.85em", marginBottom: 2 }}>{parentPath}</div>}
+          {folderMeta(itemCount, subfolderCount)}
+        </div>
       </div>
       <button
         className="folder-kebab"
@@ -267,6 +275,7 @@ export function FolderRow({
   onSelectToggle,
   itemCount,
   subfolderCount,
+  parentPath,
 }: FolderProps) {
   return (
     <div className={`row ${selected ? "sel" : ""}`} {...folderActivation(folder, onSelect, onOpen, onDetail)}>
@@ -293,6 +302,7 @@ export function FolderRow({
           <div className="t" title={folder.name}>
             {folder.name}
           </div>
+          {parentPath && <div style={{ fontSize: "0.85em", color: "var(--text-2)", marginTop: 2 }}>In: {parentPath}</div>}
         </div>
       </div>
       <div className="col c-mod">—</div>
@@ -328,6 +338,7 @@ export function FileCard({
   onSelectToggle,
   showExtensions = false,
   showDetails = true,
+  parentPath,
 }: ItemProps) {
   const itemTags = item.tags.map((id) => tags.find((t) => t.id === id)).filter(Boolean) as Tag[];
   return (
@@ -377,6 +388,7 @@ export function FileCard({
       </div>
       {showDetails && (
         <div className="meta">
+          {parentPath && <div style={{ color: "var(--accent-text)", opacity: 0.8, fontSize: "0.85em", marginBottom: 2 }}>{parentPath}</div>}
           {item.trashed && item.deletedAt != null ? (
             <ClientText render={() => `Permanently deleted in ${trashDaysLeft(item.deletedAt!)} days`} />
           ) : (
@@ -418,6 +430,7 @@ export function FileRow({
   selected = false,
   onSelectToggle,
   showExtensions = false,
+  parentPath,
 }: ItemProps) {
   const ft = fileTypeFor(item);
   const itemTags = item.tags.map((id) => tags.find((t) => t.id === id)).filter(Boolean) as Tag[];
@@ -463,6 +476,7 @@ export function FileRow({
               </button>
             )}
           </div>
+          {parentPath && <div style={{ fontSize: "0.85em", color: "var(--text-2)", marginTop: 2 }}>In: {parentPath}</div>}
           {itemTags.length > 0 && (
             <div className="tags">
               {itemTags.slice(0, 3).map((t) => (
@@ -557,6 +571,7 @@ export function FileTile({
   onSelectToggle,
   showExtensions = false,
   showDetails = true,
+  parentPath,
 }: ItemProps) {
   const ft = fileTypeFor(item);
   const itemTags = item.tags.map((id) => tags.find((t) => t.id === id)).filter(Boolean) as Tag[];

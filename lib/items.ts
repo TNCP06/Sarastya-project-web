@@ -20,6 +20,7 @@ interface ApiFolder {
   isPrivate: boolean;
   createdAt: string;
   updatedAt: string;
+  deletedAt: string | null;
 }
 
 interface ApiItemSummary {
@@ -115,6 +116,7 @@ async function fetchDriveData(
     parentId: f.parentId == null ? null : Number(f.parentId),
     createdAt: sqliteToMs(String(f.createdAt)),
     updatedAt: sqliteToMs(String(f.updatedAt)),
+    trashed: f.deletedAt != null,
   }));
 
   return { files, tags, folders };

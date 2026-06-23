@@ -74,6 +74,7 @@ import {
   bulkSoftDelete,
   bulkRestore,
   bulkPurgeNow,
+  bulkPurgeFolders,
 } from "@/app/actions";
 import { prefetchGallery } from "@/lib/gallery-cache";
 import { useUpload } from "./UploadProvider";
@@ -540,8 +541,9 @@ export function DriveApp({
 
   /* ---- folders at the current level ---- */
   const currentFolders = useMemo(() => {
+    if (view === "trash") return folders.filter((f) => f.trashed);
     if (view !== "all" || query) return [];
-    return folders.filter((f) => f.parentId === currentFolderId);
+    return folders.filter((f) => !f.trashed && f.parentId === currentFolderId);
   }, [folders, view, currentFolderId, query]);
 
   /* ---- recursive content counts per folder (total items + sub-folders) ----
@@ -820,6 +822,17 @@ export function DriveApp({
     if (clickThroughNow()) return;
     goToFolder(id);
   };
+
+  const getFolderPath = (folderId: number | null): string | undefined => {
+    if (view !== "trash") return undefined;
+    if (!folderId) return "Home";
+    const f = folders.find((x) => x.id === folderId);
+    if (!f) return "Home";
+    const p = getFolderPath(f.parentId);
+    if (!p || p === "Home") return f.name;
+    return `${p} / ${f.name}`;
+  };
+
   const folderCell = (folder: Folder) => {
     const s = statOf(folder.id);
     return {
@@ -840,6 +853,7 @@ export function DriveApp({
       selected: selected.includes(fk(folder.id)),
       itemCount: s.items,
       subfolderCount: s.subfolders,
+      parentPath: getFolderPath(folder.parentId),
     };
   };
   // Compact folder-cards grid (used above the file area; same column width as cards).
@@ -1017,6 +1031,7 @@ export function DriveApp({
       onSelectToggle: onItemToggle,
       showExtensions: prefs.showExtensions,
       showDetails: prefs.showDetailItems,
+      parentPath: getFolderPath(item.folderId),
     });
 
     // Folders render as compact cards above the items in every layout except Details,
@@ -1339,6 +1354,25 @@ export function DriveApp({
             >
               <Icon name="plus" size={15} />
               New Folder
+            </button>
+          )}
+
+          {/* Empty Trash Button */}
+          {view === "trash" && (files.some(f => f.trashed) || folders.some(f => f.trashed)) && (
+            <button
+              className="sortbtn danger-text"
+              onClick={() => {
+                setConfirmBulk({
+                  itemIds: files.filter((f) => f.trashed).map((f) => f.id),
+                  folderIds: folders.filter((f) => f.trashed).map((f) => f.id),
+                  mode: "purge",
+                });
+              }}
+              title="Empty Trash"
+              style={{ color: "var(--red)" }}
+            >
+              <Icon name="trash" size={15} />
+              Empty Trash
             </button>
           )}
 
@@ -1697,8 +1731,10 @@ export function DriveApp({
             const { itemIds, folderIds, mode } = confirmBulk;
             if (mode === "purge") {
               startTransition(async () => {
-                optimizeFiles({ type: "remove", ids: itemIds });
+                if (itemIds.length) optimizeFiles({ type: "remove", ids: itemIds });
+                // We don't have an optimizeFolders({ type: "remove" }) but it's fine, next refresh will clear them.
                 const r = await bulkPurgeNow(itemIds);
+                if (folderIds.length) await bulkPurgeFolders(folderIds);
                 if (!r.ok) setToast(r.error ?? "Failed to delete permanently.");
                 clearSelection();
               });

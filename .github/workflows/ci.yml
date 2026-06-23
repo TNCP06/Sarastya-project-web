@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  web-check:
+    name: Web Build & Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Test Build
+        run: npm run build
+        env:
+          # Dummy values to allow Next.js build to pass if it requires env vars
+          NEXT_PUBLIC_BOT_USERNAME: "dummy_bot"
+          STORAGE_CHANNEL_ID: "-100000000"
